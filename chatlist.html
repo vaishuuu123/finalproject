@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat List</title>
+  <style>
+   html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 20% 20%, #24004c 0%, #19003a 35%, #0d0024 70%, #000 100%);
+  height: 100%;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0d0024;
+  padding: 10px 15px;
+  height: 60px;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 20px;
+  background: linear-gradient(90deg,#00caff,#7f1dff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glowText 6s ease-in-out infinite;
+}
+
+@keyframes glowText {
+  0%, 100% { filter: drop-shadow(0 0 1px #4c28ff); }
+  50% { filter: drop-shadow(0 0 4px #0099e6); }
+}
+
+.setting-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
+}
+
+#searchBox {
+  padding: 10px 15px;
+  background-color: #0d0024;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+#searchInput {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 16px;
+  border-radius: 24px;
+  border: none;
+  background-color: #1a1a2e;
+  color: white;
+  outline: none;
+}
+
+#userList {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  border-radius: 24px;
+  padding: 12px 15px;
+  gap: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s ease;
+}
+
+.user-card:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.user-card img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: white;
+  word-break: break-word;
+}
+
+#addUserBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #00caff;
+  color: black;
+  border: none;
+  border-radius: 50%;
+  font-size: 28px;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 230, 255, 0.5);
+  transition: transform 0.2s ease;
+  z-index: 20;
+}
+
+#addUserBtn:hover {
+  transform: scale(1.1);
+}
+
+.settings-menu {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  background: #1f1f38;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0, 230, 255, 0.3);
+  display: none;
+  z-index: 15;
+}
+
+.settings-menu button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.settings-menu button:hover {
+  background-color: #333;
+}
+
+/* Mobile optimization */
+@media (max-width: 500px) {
+  .user-card img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .username {
+    font-size: 15px;
+  }
+
+  #searchInput {
+    font-size: 15px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  #addUserBtn {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+  <nav>
+    <p class="logo">SpeakEase</p>
+    <button class="setting-btn" id="setting-btn" aria-label="Settings menu">⋮</button>
+    <div class="settings-menu" id="settings-menu" role="menu" aria-hidden="true">
+      <button id="editProfileBtn" role="menuitem">Edit Profile</button>
+    </div>
+  </nav>
+
+  <div id="searchBox">
+    <input type="text" id="searchInput" placeholder="Search user..." aria-label="Search user" />
+  </div>
+
+  <div id="userList"></div>
+
+  <button id="addUserBtn" aria-label="Add user">＋</button>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const currentUser = params.get('username');
+    const target = params.get('target');
+    const targetimg = params.get('targetimg');
+    const targetemail = params.get('targetemail');
+    const targetlanguage = params.get('targetlanguage') || 'en';
+
+    const pass = params.get('pass');
+    const userimgsrc = params.get('imgsrc');
+    const useremail = params.get('email');
+    const userlanguage = params.get('language') || 'en';
+
+    let users = JSON.parse(localStorage.getItem('users')) || [];
+
+    // Push target user if not already stored
+    if (target && targetemail && !users.some(user => user.email === targetemail)) {
+      users.push({
+        username: target,
+        imgsrc: targetimg || 'default.jpg',
+        email: targetemail,
+        language: targetlanguage
+      });
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+
+    // Add a default user if none exist
+    if (users.length === 0) {
+      users.push({
+        username: "Test User",
+        imgsrc: "default.jpg",
+        email: "test@example.com",
+        language: "en"
+      });
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+
+    const userListDiv = document.getElementById('userList');
+
+    function displayUsers(filteredUsers) {
+      userListDiv.innerHTML = '';
+
+      if (filteredUsers.length === 0) {
+        userListDiv.innerHTML = "<p style='padding: 10px;'>No users found.</p>";
+        return;
+      }
+
+      filteredUsers.forEach(user => {
+        const div = document.createElement('div');
+        div.className = "user-card";
+        div.innerHTML = `
+          <div class="user-info">
+            <img src="${user.imgsrc}" alt="${user.username} profile image" onerror="this.src='default.jpg';" />
+            <div class="username"><strong>${user.username}</strong></div>
+          </div>
+        `;
+        div.onclick = () => {
+          const userLanguage = user.language || 'en';
+
+          localStorage.setItem('targetUser', JSON.stringify({
+            username: user.username,
+            imgsrc: user.imgsrc,
+            email: user.email,
+            language: userLanguage
+          }));
+
+          const url = `chatbox.html?username=${encodeURIComponent(currentUser)}`
+                    + `&imgsrc=${encodeURIComponent(userimgsrc)}`
+                    + `&email=${encodeURIComponent(useremail)}`
+                    + `&pass=${encodeURIComponent(pass)}`
+                    + `&language=${encodeURIComponent(userlanguage)}`
+                    + `&target=${encodeURIComponent(user.username)}`
+                    + `&targetimg=${encodeURIComponent(user.imgsrc)}`
+                    + `&targetemail=${encodeURIComponent(user.email)}`
+                    + `&targetlanguage=${encodeURIComponent(userLanguage)}`;
+          window.location.href = url;
+        };
+
+        userListDiv.appendChild(div);
+      });
+    }
+
+    // Filter out the current user (by email)
+    const visibleUsers = users.filter(user => user.email !== useremail);
+    visibleUsers.sort((a, b) => a.username.localeCompare(b.username));
+    displayUsers(visibleUsers);
+
+    // Search functionality
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const query = this.value.toLowerCase().trim();
+      const filtered = visibleUsers.filter(user =>
+        user.username.toLowerCase().includes(query)
+      );
+      displayUsers(filtered);
+    });
+
+    // Add user button handler
+    document.getElementById('addUserBtn').addEventListener('click', () => {
+      const url = `addlist.html?username=${encodeURIComponent(currentUser)}`
+                + `&email=${encodeURIComponent(useremail)}`
+                + `&pass=${encodeURIComponent(pass)}`
+                + `&language=${encodeURIComponent(userlanguage)}`;
+      window.location.href = url;
+    });
+
+    // Show/hide settings menu
+    const settingBtn = document.getElementById("setting-btn");
+    const settingsMenu = document.getElementById("settings-menu");
+
+    settingBtn.addEventListener("click", () => {
+      const isVisible = settingsMenu.style.display === "block";
+      settingsMenu.style.display = isVisible ? "none" : "block";
+      settingsMenu.setAttribute("aria-hidden", isVisible ? "true" : "false");
+    });
+
+    // Redirect to settings page
+    document.getElementById("editProfileBtn").addEventListener("click", () => {
+      const url = `setting.html?username=${encodeURIComponent(currentUser)}`
+                + `&email=${encodeURIComponent(useremail)}`
+                + `&pass=${encodeURIComponent(pass)}`
+                + `&imgsrc=${encodeURIComponent(userimgsrc)}`
+                + `&language=${encodeURIComponent(userlanguage)}`;
+      window.location.href = url;
+    });
+
+    // Hide settings menu if clicked outside
+    document.addEventListener("click", function (e) {
+      if (!settingsMenu.contains(e.target) && !settingBtn.contains(e.target)) {
+        settingsMenu.style.display = "none";
+        settingsMenu.setAttribute("aria-hidden", "true");
+      }
+    });
+  </script>
+</body>
+</html>

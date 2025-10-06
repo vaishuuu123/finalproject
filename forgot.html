@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forgot Password</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #24004c, #19003a, #0d0024, #000);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 30px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 0 25px rgba(0,230,255,0.4), 0 0 40px rgba(163,108,255,0.3), inset 0 0 10px rgba(255,255,255,0.05);
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 136, 255, 0.35);
+      background-color: #2a2a2a;
+      color: white;
+      font-size: 14px;
+      transition: background 0.25s ease;
+    }
+    input:focus {
+      outline: none;
+      background: #333;
+      border-color: #0099e6;
+    }
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      background: linear-gradient(135deg, #3722ff 0%, #0088ff 100%);
+      box-shadow: 0 0 8px rgba(0,136,255,.25);
+      border: none;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #4e34ff 0%, #009eff 100%);
+    }
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Forgot Password</h2>
+    <input id="email" type="email" placeholder="Enter your registered email" />
+    <button id="resetBtn">Send Password Reset Email</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbXkKAJHTaTq-ggM8PtyWItY90yDImn9Q",
+      authDomain: "aller-ca816.firebaseapp.com",
+      databaseURL: "https://aller-ca816-default-rtdb.firebaseio.com",
+      projectId: "aller-ca816",
+      storageBucket: "aller-ca816.appspot.com",
+      messagingSenderId: "656252999207",
+      appId: "1:656252999207:web:e54de216113c1bb33b2002",
+      measurementId: "G-PVSKCK6MZ0",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const resetBtn = document.getElementById('resetBtn');
+    const emailInput = document.getElementById('email');
+    const messageDiv = document.getElementById('message');
+
+    resetBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+
+      messageDiv.textContent = '';
+      if (!email) {
+        messageDiv.textContent = 'Please enter your email address.';
+        return;
+      }
+      if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        messageDiv.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      resetBtn.disabled = true;
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        messageDiv.style.color = 'lightgreen';
+        messageDiv.textContent = 'Password reset email sent! Check your inbox (and spam folder).';
+      } catch (error) {
+        messageDiv.style.color = 'red';
+        if (error.code === 'auth/user-not-found') {
+          messageDiv.textContent = 'No user found with this email.';
+        } else {
+          messageDiv.textContent = 'Error sending reset email: ' + error.message;
+        }
+      } finally {
+        resetBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User List</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #24004c 0%, #19003a 35%, #0d0024 70%, #000 100%);
+      color: white;
+      width: 100%;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #userList {
+      width: 100%;
+      min-height: 100vh;
+      padding: 16px 12px;
+      max-width: 640px;
+      margin: auto;
+    }
+
+    .search-option {
+      margin-bottom: 16px;
+    }
+
+    #searchBox-text {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 24px;
+      border: 1px solid rgba(0, 136, 255, 0.3);
+      font-size: 15px;
+      background-color: #1e1e1e;
+      color: white;
+      outline: none;
+      transition: border-color 0.3s ease, background-color 0.3s ease;
+    }
+
+    #searchBox-text:focus {
+      border-color: #0099e6;
+      background-color: #252525;
+    }
+
+    #userCards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .user-card {
+      background: transparent;
+      border-radius: 24px;
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background 0.2s ease;
+    }
+
+    .user-card:hover, .user-card:focus-within {
+      background-color: rgba(255, 255, 255, 0.05);
+      outline: none;
+    }
+
+    .user-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .user-card img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 136, 255, 0.3);
+      flex-shrink: 0;
+      background: #444;
+    }
+
+    .username {
+      font-weight: 500;
+      font-size: 16px;
+      color: white;
+      word-break: break-word;
+    }
+
+    .add-btn {
+      background: linear-gradient(135deg, #3722ff, #0088ff);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 136, 255, 0.5);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    .add-btn:hover, .add-btn:focus {
+      transform: scale(1.1);
+      box-shadow: 0 0 18px rgba(0, 136, 255, 0.7);
+      outline: none;
+    }
+
+    @media (max-width: 600px) {
+      .user-card {
+        padding: 10px 0;
+        gap: 10px;
+      }
+
+      .user-card img {
+        width: 44px;
+        height: 44px;
+      }
+
+      .username {
+        font-size: 15px;
+      }
+
+      #searchBox-text {
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="userList">
+    <div class="search-option">
+      <input 
+        id="searchBox-text" 
+        type="text" 
+        placeholder="Search to add user..." 
+        aria-label="Search users"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+    <div id="userCards" role="list" aria-live="polite" aria-relevant="additions removals"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbXkKAJHTaTq-ggM8PtyWItY90yDImn9Q",
+      authDomain: "aller-ca816.firebaseapp.com",
+      databaseURL: "https://aller-ca816-default-rtdb.firebaseio.com",
+      projectId: "aller-ca816",
+      storageBucket: "aller-ca816.appspot.com",
+      messagingSenderId: "656252999207",
+      appId: "1:656252999207:web:e54de216113c1bb33b2002",
+      measurementId: "G-PVSKCK6MZ0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const userListRef = ref(db, 'users/');
+
+    // Get parameters from URL
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get('username') || 'Guest';
+    const imgsrc = params.get('imgsrc') || 'https://via.placeholder.com/48?text=User';
+    const pass = params.get('pass') || '';
+    const email = params.get('email') || '';
+    const language = params.get('language') || 'en';
+    const userId = params.get('userId') || '';
+
+    let allUsers = [];
+
+    // Ensure current user exists, if not, add them
+    onValue(userListRef, (snapshot) => {
+      const users = snapshot.val() || {};
+
+      if (userId && !users[userId]) {
+        const newUserRef = ref(db, 'users/' + userId);
+        set(newUserRef, { username, imgsrc, pass, email, language });
+      }
+
+      // Exclude current user by userId
+      allUsers = Object.entries(users)
+        .filter(([key]) => key !== userId)
+        .map(([key, user]) => user);
+
+      displayUsers(allUsers);
+    });
+
+    function displayUsers(userArray) {
+      const userCardsDiv = document.getElementById('userCards');
+      userCardsDiv.innerHTML = '';
+
+      if (userArray.length === 0) {
+        userCardsDiv.innerHTML = '<p style="text-align:center; color: #888; padding: 20px;">No users found.</p>';
+        return;
+      }
+
+      userArray.forEach(user => {
+        const safeUsername = String(user.username || "Unknown").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+        const safeImg = user.imgsrc || 'https://via.placeholder.com/48?text=User';
+        const safeEmail = user.email || '';
+        const safeLanguage = user.language || 'en';
+
+        const div = document.createElement('div');
+        div.className = 'user-card';
+
+        div.innerHTML = `
+          <div class="user-left">
+            <img src="${safeImg}" alt="Profile photo of ${safeUsername}" loading="lazy" />
+            <div class="username">${safeUsername}</div>
+          </div>
+          <button class="add-btn" aria-label="Open chat with ${safeUsername}">＋</button>
+        `;
+
+        // Attach event listener on button safely
+        div.querySelector('.add-btn').addEventListener('click', () => {
+          const targetName = safeUsername;
+          const targetImg = safeImg;
+          const targetEmail = safeEmail;
+          const targetLang = safeLanguage;
+
+          const url = `chatlist.html?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}&imgsrc=${encodeURIComponent(imgsrc)}&email=${encodeURIComponent(email)}&pass=${encodeURIComponent(pass)}&language=${encodeURIComponent(language)}&target=${encodeURIComponent(targetName)}&targetimg=${encodeURIComponent(targetImg)}&targetemail=${encodeURIComponent(targetEmail)}&targetlanguage=${encodeURIComponent(targetLang)}`;
+
+          window.location.href = url;
+        });
+
+        userCardsDiv.appendChild(div);
+      });
+    }
+
+    // Search/filter users by username
+    document.getElementById('searchBox-text').addEventListener('input', function () {
+      const query = this.value.toLowerCase().trim();
+      if (!query) {
+        displayUsers(allUsers);
+        return;
+      }
+      const filtered = allUsers.filter(u => (u.username || '').toLowerCase().includes(query));
+      displayUsers(filtered);
+    });
+  </script>
+</body>
+</html>

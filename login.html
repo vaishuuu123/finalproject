@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChatApp Login</title>
+
+  <style>
+    /* ---------- 1. Global reset ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ---------- 2. Themed background ---------- */
+    body {
+      background: radial-gradient(circle at 20% 20%, #24004c 0%, #19003a 35%, #0d0024 70%, #000 100%);
+      color: #fff;
+      font-family: 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ---------- 3. Glassy panel ---------- */
+    .container {
+      background: rgba(0,0,0,0.7);
+      padding: 30px;
+      width: 300px;
+      height: 370px;
+      color: white;
+      text-align: center;
+      box-shadow:
+        0 0 25px rgba(0,230,255,0.4),
+        0 0 40px rgba(163,108,255,0.3),
+        inset 0 0 10px rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      border-radius: 30px;
+      height: auto; /* lets content size container naturally */
+  padding-bottom: 40px; /* if you want extra space bottom */
+    }
+
+    /* Logo wrapper */
+    .logo-wrapper {
+      width: 80px;
+      height: 80px;
+      padding: 2px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2a004b, #100026);
+      border: 2px solid rgba(0,230,255,.4);
+      box-shadow:
+        0 0 12px rgba(0,230,255,.4),
+        0 0 24px rgba(0,230,255,.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Title */
+    .app-name {
+      background: linear-gradient(90deg, #0099e6, #4c28ff, #7f1dff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      animation: glowText 6s ease-in-out infinite;
+    }
+    @keyframes glowText {
+      0%, 100% {filter: drop-shadow(0 0 1px #4c28ff);}
+      50% {filter: drop-shadow(0 0 4px #0099e6);}
+    }
+
+    /* Inputs */
+    .input {
+      width: 100%;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 6px;
+      background: #2a2a2a;
+      color: grey;
+      font-size: 15px;
+      transition: background 0.25s ease;
+    }
+
+    .input::placeholder {
+      color: #aaa;
+    }
+
+    .input:focus {
+      outline: none;
+      background: #333;
+      color: white;
+    }
+
+    /* Button */
+    .login-btn {
+      
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      padding: 13px 0;
+      border-radius: 24px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+      background: linear-gradient(135deg,#3722ff 0%,#0088ff 100%);
+      color: #fff;
+      border: 1px solid rgba(0,136,255,.35);
+      box-shadow: 0 0 8px rgba(0,136,255,.25);
+    }
+
+    .login-btn:hover {
+      transform: translateY(-3px);
+      background: linear-gradient(135deg,#4e34ff 0%,#009eff 100%);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      filter: blur(28px);
+      z-index: -1;
+      transition: opacity 0.3s ease;
+      background: rgba(0,136,255,.45);
+    }
+
+    .login-btn:hover::before {
+      opacity: 0.6;
+    }
+    .forgot-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #00e6ff;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+  color: #a36cff;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="logo-wrapper">
+      <img src="https://cdn.glitch.global/139b9be5-34eb-430f-a97a-8bc34bfda987/image.png?v=1751667333298"
+           alt="ChatApp Logo" class="logo" id="imgsrc" />
+    </div>
+
+    <h1 class="app-name">SpeakEase</h1>
+
+    <input type="text" id="username" class="input" placeholder="Enter your username" />
+    <input type="password" id="password" class="input" placeholder="Enter your password" />
+    <button id="login-btn" class="login-btn">Login</button>
+    <a href="signin.html" id="signin-link" style="margin-top: 12px; color: #00caff; cursor: pointer; text-decoration: underline; font-weight: 600;">Already have an account? Sign-In</a>
+    <a href="forgot.html" class="forgot-link">Forgot?</a>
+
+  </div>
+
+   <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbXkKAJHTaTq-ggM8PtyWItY90yDImn9Q",
+    authDomain: "aller-ca816.firebaseapp.com",
+    databaseURL: "https://aller-ca816-default-rtdb.firebaseio.com",
+    projectId: "aller-ca816",
+    storageBucket: "aller-ca816.appspot.com",
+    messagingSenderId: "656252999207",
+    appId: "1:656252999207:web:e54de216113c1bb33b2002",
+    measurementId: "G-PVSKCK6MZ0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  function isValidPassword(password) {
+    const minLength = 6;
+    const hasLetters = /[a-zA-Z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    return password.length >= minLength && hasLetters && hasNumbers;
+  }
+
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const imgsrc = document.getElementById("imgsrc").src;
+
+    if (!username) {
+      alert("Please enter a username.");
+      return;
+    }
+    if (!isValidPassword(password)) {
+      alert("Password must be at least 6 characters long and include letters and numbers.");
+      return;
+    }
+
+    // Convert username to Firebase key format
+    const userId = username.replace(/\./g, "_").toLowerCase();
+
+    try {
+      // Check if username already exists
+      const snapshot = await get(ref(db, `users/${userId}`));
+      if (snapshot.exists()) {
+        alert("Username already exists. Please choose a different username.");
+        return;
+      }
+
+      // Username available, save user data
+      await set(ref(db, `users/${userId}`), {
+        username: username,
+        password: password,
+        imgsrc: imgsrc
+      });
+
+      // Redirect to next page with user params
+      openHome(userId, username, imgsrc, password);
+
+    } catch (error) {
+      console.error("Error checking username or saving user:", error);
+      alert("An error occurred. Please try again.");
+    }
+  });
+
+  function openHome(userId, username, imgsrc, password) {
+    const encodedUserId = encodeURIComponent(userId);
+    const encodedUsername = encodeURIComponent(username);
+    const encodedImg = encodeURIComponent(imgsrc);
+    const encodedPass = encodeURIComponent(password);
+    window.location.href = `number.html?userId=${encodedUserId}&username=${encodedUsername}&img=${encodedImg}&pass=${encodedPass}`;
+  }
+</script>
+</body>
+</html>

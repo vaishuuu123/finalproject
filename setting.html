@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Update Profile</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #24004c 0%, #19003a 35%, #0d0024 70%, #000 100%);
+      height: 100%;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: #1f1f38;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 230, 255, 0.3);
+      width: 90%;
+      max-width: 400px;
+      min-width: 300px;
+      min-height: 300px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      background: linear-gradient(90deg,#00caff,#7f1dff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #1a1a2e;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg,#00caff,#7f1dff);
+      color: black;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: linear-gradient(90deg,#7f1dff,#00caff);
+    }
+
+    /* Responsive adjustments for small phones */
+    @media (max-width: 400px) {
+      .container {
+        padding: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      input, button {
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      label {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Edit Profile</h2>
+    <form id="updateForm">
+      <label for="username">Username</label>
+      <input type="text" id="username" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+
+      <label for="password">New Password</label>
+      <input type="password" id="password" placeholder="Leave blank to keep old password" />
+
+      <label for="imgsrc">Profile Image URL</label>
+      <input type="text" id="imgsrc" />
+
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    // Firebase config - ensure it matches your existing project config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbXkKAJHTaTq-ggM8PtyWItY90yDImn9Q",
+      authDomain: "aller-ca816.firebaseapp.com",
+      databaseURL: "https://aller-ca816-default-rtdb.firebaseio.com",
+      projectId: "aller-ca816",
+      storageBucket: "aller-ca816.appspot.com",
+      messagingSenderId: "656252999207",
+      appId: "1:656252999207:web:e54de216113c1bb33b2002",
+      measurementId: "G-PVSKCK6MZ0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const oldUsername = params.get("username") || "";
+    const oldEmail = params.get("email") || "";
+    const oldImgSrc = params.get("imgsrc") || "";
+    const oldPass = params.get("pass") || "";
+    const language = params.get("language") || "en";
+
+    // Pre-fill input fields
+    document.getElementById("username").value = oldUsername;
+    document.getElementById("email").value = oldEmail;
+    document.getElementById("imgsrc").value = oldImgSrc;
+
+    const updateForm = document.getElementById("updateForm");
+    updateForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const newUsername = document.getElementById("username").value.trim();
+      const newEmail = document.getElementById("email").value.trim();
+      const newPassword = document.getElementById("password").value.trim();
+      const newImgSrc = document.getElementById("imgsrc").value.trim();
+
+      if (!newUsername || !newEmail) {
+        alert("Username and Email are required.");
+        return;
+      }
+
+      // Assume users are stored by userId = email with dots replaced as Firebase keys can't have dots
+      const userId = newEmail.replace(/\./g, "_").toLowerCase();
+
+      try {
+        // Read existing user data first if any (optional, but good to check)
+        const userSnapshot = await get(ref(db, `users/${userId}`));
+        if (!userSnapshot.exists()) {
+          alert("User not found in database.");
+          return;
+        }
+        const userData = userSnapshot.val();
+
+        // Prepare updated data object
+        let updatedData = {
+          username: newUsername,
+          email: newEmail,
+          imgsrc: newImgSrc || userData.imgsrc || "",
+          // Language unchanged for now, you can add it as needed
+          language: language
+        };
+        // Update password only if provided, else keep old password
+        updatedData.password = newPassword || userData.password || "";
+
+        // Update Firebase Realtime Database under `users/userId`
+        await update(ref(db, `users/${userId}`), updatedData);
+
+        alert("✅ Profile updated successfully.");
+
+        // Navigate back to chatlist.html with updated params
+        const redirectUrl = `addlist.html?username=${encodeURIComponent(newUsername)}` +
+                            `&imgsrc=${encodeURIComponent(updatedData.imgsrc)}` +
+                            `&email=${encodeURIComponent(newEmail)}` +
+                            `&pass=${encodeURIComponent(updatedData.password)}` +
+                            `&language=${encodeURIComponent(language)}`;
+        window.location.href = redirectUrl;
+
+      } catch (error) {
+        console.error("Profile update error:", error);
+        alert("❌ Failed to update profile. Please try again.");
+      }
+    });
+  </script>
+</body>
+</html>
